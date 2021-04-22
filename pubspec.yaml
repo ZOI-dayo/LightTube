@@ -26,6 +26,7 @@ dependencies:
   googleapis: any
   googleapis_auth: any
   webview_flutter: any
+  youtube_api: any
 
 
   # The following adds the Cupertino Icons font to your application.

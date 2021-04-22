@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:youtube_api/youtube_api.dart';
 
 void main() {
   runApp(LightTubeApp());
@@ -33,80 +34,77 @@ class LightTubeHomePage extends StatefulWidget {
 }
 
 class _LightTubeHomePageState extends State<LightTubeHomePage> {
-  int _counter = 0;
-  WebViewController _controller;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  YoutubeAPI ytApi = YoutubeAPI(key);
+  List<YT_API> ytResult = [];
+
+
+  ytSearch() async {
+    String query = "日本";
+    ytResult = await ytApi.search(query);
+    // ytResult = await ytApi.nextPage();
+    log("Query : " + ytApi.getQuery.toString() + ";");
+
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    ytSearch();
+    print('hello');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Webview Demo'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () {
-              _controller.reload();
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.add_comment),
-            onPressed: () {
-              showDialog(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      title: Text('webviewの上に表示'),
-                    );
-                  });
-            },
-          ),
-        ],
+        title: Text('Youtube API'),
       ),
-      body: WebView(
-        initialUrl: 'https://youtube.com',
-        // initialUrl: 'assets/youtube.html',
-        javascriptMode: JavascriptMode.unrestricted,
-        onWebViewCreated: (WebViewController controller) async {
-          _controller = controller;
-          // await _loadHtmlFromAssets();
-          /*_controller.evaluateJavascript(
-              "window.onload = function() {getData.postMessage(\"あああ\");};");
-
-           */
-        },
-        onPageStarted: (String str) {
-          _controller.evaluateJavascript(
-              "getData.postMessage(\"あああ\");");
-        },
-        javascriptChannels: Set.from([
-          JavascriptChannel(
-              name: "getData",
-              onMessageReceived: (JavascriptMessage result) {
-                // イベントが発動した時に呼び出したい関数
-                log(result.message);
-                return "";
-              }),
-        ]),
+      body: Container(
+        child: ListView.builder(
+          itemCount: ytResult.length,
+          itemBuilder: (_, int index) => listItem(index),
+        ),
       ),
     );
   }
 
-  Future _loadHtmlFromAssets() async {
-    //　HTMLファイルを読み込んでHTML要素を文字列で返す
-    String fileText = await rootBundle.loadString('assets/youtube.html');
-    // <WebViewControllerのloadUrlメソッドにローカルファイルのURI情報を渡す>
-    // WebViewControllerはWebViewウィジェットに情報を与えることができます。
-    // <Uri.dataFromStringについて>
-    // パラメータで指定されたエンコーディングまたは文字セット（指定されていないか認識されない場合はデフォルトでUS-ASCII）
-    // を使用してコンテンツをバイトに変換し、結果のデータURIにバイトをエンコードします。
-    _controller.loadUrl(Uri.dataFromString(fileText,
-            mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
-        .toString());
+  Widget listItem(index) {
+    return Card(
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 7.0),
+        padding: EdgeInsets.all(12.0),
+        child: Row(
+          children: <Widget>[
+            Image.network(
+              ytResult[index].thumbnail['default']['url'],
+            ),
+            Padding(padding: EdgeInsets.only(right: 20.0)),
+            Expanded(
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                  Text(
+                    ytResult[index].title,
+                    softWrap: true,
+                    style: TextStyle(fontSize: 18.0),
+                  ),
+                  Padding(padding: EdgeInsets.only(bottom: 1.5)),
+                  Text(
+                    ytResult[index].channelTitle,
+                    softWrap: true,
+                  ),
+                  Padding(padding: EdgeInsets.only(bottom: 3.0)),
+                  Text(
+                    ytResult[index].url,
+                    softWrap: true,
+                  ),
+                ]))
+          ],
+        ),
+      ),
+    );
   }
 }
