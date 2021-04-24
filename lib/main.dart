@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:light_tube/api/ApiKey.dart';
-import 'dart:io';
+import 'package:light_tube/system/Config.dart';
+
+final Config _config = new Config();
 
 void main() {
+  _config.initData();
   runApp(LightTubeApp());
 }
 
