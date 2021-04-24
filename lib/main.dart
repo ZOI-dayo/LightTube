@@ -34,10 +34,12 @@ class LightTubeHomePage extends StatefulWidget {
 
 class _LightTubeHomePageState extends State<LightTubeHomePage> {
   // Object resStr;
+  Future<Map<String, dynamic>> _data;
 
   @override
   void initState() {
     super.initState();
+    _data = search('xyxyz');
     print('hello');
   }
 
@@ -61,72 +63,95 @@ class _LightTubeHomePageState extends State<LightTubeHomePage> {
       appBar: AppBar(
         title: Text('Youtube API'),
       ),
-      body: Container(
-        child: FutureBuilder(
-            future: search('ベノム'),
-            builder: (BuildContext context,
-                AsyncSnapshot<Map<String, dynamic>> snapshot) {
-              log("02 : " + snapshot.toString());
-              if (snapshot.connectionState != ConnectionState.done) {
-                return CircularProgressIndicator();
-              }
-              if (snapshot.hasData) {
-                if (snapshot.data.containsKey('error')) {
-                  List<dynamic> errorList = snapshot.data['error']['errors'];
-                  String errorCode = "";
-                  for (int i = 0; i < errorList.length; i++) {
-                    Map<String, dynamic> errorContent = errorList[i];
-                    log("04: "+errorContent.toString());
-                    errorCode += errorContent['reason'] + ",";
-                  }
-                  return Text(
-                      "APIでエラーが発生しました。\nエラーコード:$errorCode");
-                } else {
-                  return ListView.builder(
-                    itemCount: snapshot.data['items'].length,
-                    itemBuilder: (_, int index) => videoItem(index, snapshot.data['items'][index]['snippet'], snapshot.data['items'][index]['id']['videoId']),
-                  );
-                  // return Text(snapshot.data['items'][0]['snippet']['title'].toString());
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _data = search('xyxyz');
+          setState(() {}); // ★これ！
+        },
+        child: Container(
+          child: FutureBuilder(
+              future: _data,
+              builder: (BuildContext context,
+                  AsyncSnapshot<Map<String, dynamic>> snapshot) {
+                log("02 : " + snapshot.toString());
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return CircularProgressIndicator();
                 }
-              } else {
-                return Text("データの取得に失敗しました");
-              }
-            }),
+                if (snapshot.hasData) {
+                  return createListWidget(snapshot.data);
+                } else {
+                  return Text("データの取得に失敗しました");
+                }
+              }),
+        ),
       ),
     );
   }
-
+  Widget createListWidget(Map<String, dynamic> data){
+    if (data.containsKey('error')) {
+      List<dynamic> errorList = data['error']['errors'];
+      String errorCode = "";
+      for (int i = 0; i < errorList.length; i++) {
+        Map<String, dynamic> errorContent = errorList[i];
+        log("04: " + errorContent.toString());
+        errorCode += errorContent['reason'] + ",";
+      }
+      return Text("APIでエラーが発生しました。\nエラーコード:$errorCode");
+    } else {
+      return ListView.builder(
+        itemCount: data['items'].length,
+        itemBuilder: (_, int index) => videoItem(
+            index,
+            data['items'][index]['snippet'],
+            data['items'][index]['id']['videoId']),
+      );
+      // return Text(snapshot.data['items'][0]['snippet']['title'].toString());
+    }
+  }
   Widget videoItem(int index, Map<String, dynamic> data, String id) {
     log(data.toString());
-    return Card(
+    return ElevatedButton(
+      onPressed: () {
+        log(id);
+      },
+      style:ElevatedButton.styleFrom(
+        primary: Colors.white,
+        onPrimary: Colors.black,
+      ),
+      // color: Colors.white,
+      // shape: const OutlineInputBorder(
+      //   borderRadius: BorderRadius.all(Radius.circular(0)),
+      // ),
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 7.0),
         padding: EdgeInsets.all(12.0),
         child: Row(
           children: <Widget>[
-            // Image.network(data['title'],),
+            Image.network(
+              data['thumbnails']['default']['url'],
+            ),
             Padding(padding: EdgeInsets.only(right: 20.0)),
             Expanded(
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(
-                        data['title'],
-                        softWrap: true,
-                        style: TextStyle(fontSize: 18.0),
-                      ),
-                      Padding(padding: EdgeInsets.only(bottom: 1.5)),
-                      Text(
-                        data['channelTitle'],
-                        softWrap: true,
-                      ),
-                      Padding(padding: EdgeInsets.only(bottom: 3.0)),
-                      Text(
-                        "https://www.youtube.com/watch?v=" + id,
-                        softWrap: true,
-                      ),
-                    ]))
+                  Text(
+                    data['title'],
+                    softWrap: true,
+                    style: TextStyle(fontSize: 18.0),
+                  ),
+                  Padding(padding: EdgeInsets.only(bottom: 1.5)),
+                  Text(
+                    data['channelTitle'],
+                    softWrap: true,
+                  ),
+                  Padding(padding: EdgeInsets.only(bottom: 3.0)),
+                  Text(
+                    "https://www.youtube.com/watch?v=" + id,
+                    softWrap: true,
+                  ),
+                ]))
           ],
         ),
       ),
