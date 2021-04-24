@@ -82,12 +82,53 @@ class _LightTubeHomePageState extends State<LightTubeHomePage> {
                   return Text(
                       "APIでエラーが発生しました。\nエラーコード:$errorCode");
                 } else {
-                  return Text(snapshot.data['items'][0]['snippet']['title'].toString());
+                  return ListView.builder(
+                    itemCount: snapshot.data['items'].length,
+                    itemBuilder: (_, int index) => videoItem(index, snapshot.data['items'][index]['snippet'], snapshot.data['items'][index]['id']['videoId']),
+                  );
+                  // return Text(snapshot.data['items'][0]['snippet']['title'].toString());
                 }
               } else {
                 return Text("データの取得に失敗しました");
               }
             }),
+      ),
+    );
+  }
+
+  Widget videoItem(int index, Map<String, dynamic> data, String id) {
+    log(data.toString());
+    return Card(
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 7.0),
+        padding: EdgeInsets.all(12.0),
+        child: Row(
+          children: <Widget>[
+            // Image.network(data['title'],),
+            Padding(padding: EdgeInsets.only(right: 20.0)),
+            Expanded(
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        data['title'],
+                        softWrap: true,
+                        style: TextStyle(fontSize: 18.0),
+                      ),
+                      Padding(padding: EdgeInsets.only(bottom: 1.5)),
+                      Text(
+                        data['channelTitle'],
+                        softWrap: true,
+                      ),
+                      Padding(padding: EdgeInsets.only(bottom: 3.0)),
+                      Text(
+                        "https://www.youtube.com/watch?v=" + id,
+                        softWrap: true,
+                      ),
+                    ]))
+          ],
+        ),
       ),
     );
   }
