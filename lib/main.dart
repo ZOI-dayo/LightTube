@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:light_tube/api/ApiKey.dart';
 import 'package:light_tube/system/Config.dart';
 
-final Config _config = new Config();
+Config _config;
 
 void main() {
-  _config.initData();
+  _config = Config("lt_db", "settings");
   runApp(LightTubeApp());
 }
 
@@ -43,15 +43,15 @@ class _LightTubeHomePageState extends State<LightTubeHomePage> {
   @override
   void initState() {
     super.initState();
-    _data = search('xyxyz');
+    _data = search('Youtube');
     print('hello');
   }
 
   Future<Map<String, dynamic>> search(String query) async {
     var request = await HttpClient().getUrl(Uri.parse(
-        'https://www.googleapis.com/youtube/v3/search?part=snippet&q=$query&relevanceLanguage=ja&key=${ApiKey.key}'));
+        'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=$query&regionCode=jp&relevanceLanguage=ja&key=${ApiKey.key}&maxResults=5&fields=items(id/videoId,snippet(thumbnails/default/url,title,channelTitle))'));
     request.headers.add('Accept-Encoding', 'gzip');
-    request.headers.add('User-Agent', 'my program (gzip)');
+    request.headers.add('User-Agent', 'light tube (gzip)');
     log("03");
     var response = await request.close();
     var responseBodyText = await utf8.decodeStream(response);
@@ -69,8 +69,8 @@ class _LightTubeHomePageState extends State<LightTubeHomePage> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          _data = search('xyxyz');
-          setState(() {}); // ★これ！
+          _data = search('Youtube');
+          setState(() {});
         },
         child: Container(
           child: FutureBuilder(
@@ -102,6 +102,7 @@ class _LightTubeHomePageState extends State<LightTubeHomePage> {
       }
       return Text("APIでエラーが発生しました。\nエラーコード:$errorCode");
     } else {
+      log("08-3: " + data.toString());
       return ListView.builder(
         itemCount: data['items'].length,
         itemBuilder: (_, int index) => videoItem(
@@ -113,12 +114,13 @@ class _LightTubeHomePageState extends State<LightTubeHomePage> {
     }
   }
   Widget videoItem(int index, Map<String, dynamic> data, String id) {
-    log(data.toString());
+    log("08: " + data.toString());
+    log("08-2: " + id.toString());
     return ElevatedButton(
       onPressed: () {
         log(id);
       },
-      style:ElevatedButton.styleFrom(
+      style: ElevatedButton.styleFrom(
         primary: Colors.white,
         onPrimary: Colors.black,
       ),
